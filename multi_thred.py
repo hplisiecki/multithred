@@ -67,83 +67,13 @@ if __name__ == '__main__':
     destinations = [r'Z:\Data\Twitter\A\stems_rt', r'Z:\Data\Twitter\E\stems_rt', r'Z:\Data\Twitter\B1\stems_rt', r'Z:\Data\Twitter\B2\stems_rt']
     breaking = False
 
-    for dir, destination in zip(dirs, destinations):
-        for file in os.listdir(dir):
-        #     breaking = True
-        #     break
-        # if breaking:
-        #     break
 
-            # print(f"{file.replace('.parquet', '')}_stemmed_no_rt.parquet")
-            if (f"{file.replace('.parquet', '')}_processed.parquet" not in os.listdir(dir)) and ('processed' not in file):
-                print(file)
-                t1 = time.time()
+    texts_set = ['ale dzisiaj zjadłem obiad' , 'zjadłem obiad dzisia bardzo']
+    pool = multiprocessing.Pool(16)
+    L = [pool.map(stem, texts_set)]
 
-                # df = pd.read_csv(dir + '/' + file, encoding='utf-8')
-                # pool = multiprocessing.Pool(16)
-                # L = [pool.map(stem, df['tweet'].to_list())]
-                # df['stemmed_tweet'] = L[0]
-                # df.to_csv(dir + '/' + file, index=False)
+    pool.close()
+    del pool
 
-                # # open csv
-                table = pq.read_table(os.path.join(dir, file))
-                # to pandas
-                df = pd.DataFrame(table.to_pydict())
-                # pick first 100 rows
-                # df = df[:100]
-                # drop na from text
-                # df = df.dropna(subset=['tweet'])
-                # sample 100
-                # delete duplicates
-                # df = df.drop_duplicates(subset=['id'])
-
-                RT = True
-                if RT:
-                    texts = df.text.to_list()
-                    new_texts = []
-                    rt = []
-                    for text in texts:
-                        if text[:2] == 'RT':
-                            new_texts.append(' '.join(text.split(': ')[1:]))
-                            rt.append(True)
-                        else:
-                            new_texts.append(text)
-                            rt.append(False)
-                    texts_dates = [(str(idx), str(text), str(date)[:10]) for (idx, text, date) in
-                                   zip(df['id'], new_texts, df['created'])]
-                else:
-                    texts_dates = [(str(idx), str(text), str(date)[:10]) for (idx, text, date) in zip(df['id'], df['text'], df['created']) if text[:2] != 'RT']
-                    new_texts = [text for (idx, text, date) in texts_dates]
-                del table
-                print(len(texts_dates))
-                print('loaded Tweets')
-
-                texts_set = list(set(new_texts))
-                print(len(texts_set))
-
-                pool = multiprocessing.Pool(16)
-                L = [pool.map(stem, texts_set)]
-                print('stemmed')
-
-                dictionary = dict(zip(texts_set, [line for line in L[0]]))
-                # dates = [line[2] for line in texts_dates]
-                print('dictionary created')
-
-                # ids = [line[0] for line in texts_dates]
-                texts = [dictionary[line[1]] for line in texts_dates]
-                pool.close()
-                del pool
-                # save
-                # pydict = {'id': ids, 'text': texts, 'date': dates, 'rt': rt}
-                df['stemmed'] = texts
-                table = pa.Table.from_pandas(df)
-                # overwrite
-                pq.write_table(table, os.path.join(dir, file.replace('.parquet', '_processed.parquet')))
-
-                # pq.write_table(table, os.path.join(destination, f"{file.replace('.parquet', '')}_stemmed_rt.parquet"))
-
-                t2 = time.time()
-                # count minutes
-                print((t2 - t1) / 60)
 
 
